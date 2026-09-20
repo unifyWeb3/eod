@@ -1,0 +1,10 @@
+{
+  "base_deploy_tx": "700edc4f01e44e6b1da8babfc9dfac67ad18ce3a2af3d35f2b429fdacdbe9cd4",
+  "escrow": "0x33731b4ce58BD5B26736C2F95a8f8e9c56e6CE15",
+  "gl_deploy_tx": "0xca95bf1e92090c80a879c10e043fdec3ae3c2ff0874254e23d78304d5bbb8bd0",
+  "gl_contract": "0xdD93A530bDC56b0967114551dc67e1805a473906",
+  "eval_tx": "0xbdd3d02630ad61cbfdaf9b9ca9d6a27f17fac2af1c614523a2d920eae446bb77",
+  "verdict": "ACCEPT",
+  "settle_tx": "17272549a7af355e1f591af1e6b965dffd0d94eaab3d12c9c36776f1f68d7597",
+  "settle_kind": "release"
+}

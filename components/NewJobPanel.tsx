@@ -7,9 +7,15 @@ import '@genlayer/transaction-kit-react/styles.css';
 import {
   ACCEPTANCE_CONTRACT,
   CHAIN,
-  DEMO_POLICY,
   FEE_PROFILE,
 } from '../lib/genlayer';
+import {
+  DEFAULT_CRITERIA,
+  buildPolicy,
+  validateCriteria,
+  type Criterion,
+} from '../lib/policy';
+import { CriteriaBuilder } from './CriteriaBuilder';
 import {
   PHASE_TIMEOUT_MAX,
   PHASE_TIMEOUT_MIN,
@@ -24,9 +30,19 @@ declare global {
 
 export default function NewJobPanel() {
   const [account, setAccount] = useState<string | null>(null);
-  const [policy, setPolicy] = useState(DEMO_POLICY);
+  const [criteria, setCriteria] = useState<Criterion[]>(DEFAULT_CRITERIA);
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const builderProblems = useMemo(() => validateCriteria(criteria), [criteria]);
+  const policy = useMemo(() => {
+    if (builderProblems.length > 0) return null;
+    try {
+      return JSON.stringify(buildPolicy(criteria));
+    } catch {
+      return null;
+    }
+  }, [criteria, builderProblems]);
 
   // Fail closed: never build a signing kit from an out-of-bounds profile.
   const profileProblems = useMemo(
@@ -39,6 +55,13 @@ export default function NewJobPanel() {
   const kit = useMemo(() => {
     if (!account || typeof window === 'undefined' || !window.ethereum)
       return null;
+    if (policy === null) {
+      setError(
+        'Fix the criteria above before signing: ' +
+          builderProblems.join(' '),
+      );
+      return null;
+    }
     if (profileProblems.length > 0) {
       setError(
         'Fee profile blocked: ' +
@@ -88,16 +111,19 @@ export default function NewJobPanel() {
         prices are quoted at signing; these allocations come from
         fee-profile.json.
       </p>
-      <label>
-        Policy JSON (2–4 criteria)
-        <br />
-        <textarea
-          rows={8}
-          cols={70}
-          value={policy}
-          onChange={(e) => setPolicy(e.target.value)}
-        />
-      </label>
+      <CriteriaBuilder criteria={criteria} onChange={setCriteria} />
+      <details className="mt-4 rounded-[10px] border border-[#E8E6E1] bg-white">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+          <span className="inline-flex min-h-[44px] items-center">
+            Advanced → View generated policy JSON
+          </span>
+        </summary>
+        <div className="border-t border-[#E8E6E1] px-4 py-3">
+          <pre className="mono overflow-x-auto text-xs leading-relaxed">
+            {policy ?? '(invalid criteria — nothing to sign)'}
+          </pre>
+        </div>
+      </details>
       {kit ? (
         <GenLayerTransactionPanel
           kit={kit}
@@ -105,7 +131,7 @@ export default function NewJobPanel() {
             kind: 'write',
             address: ACCEPTANCE_CONTRACT,
             method: 'create_job',
-            args: [policy],
+            args: [policy ?? ''],
           }}
           trackUntil="finalized"
           onDone={(status: any) => {

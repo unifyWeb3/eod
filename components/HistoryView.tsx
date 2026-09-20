@@ -61,42 +61,63 @@ function verdictBadge(v?: string) {
 }
 
 function Evidence({ f }: { f: Fixture }) {
-  const rows: Array<[string, string | undefined, string?]> = [
-    ['Rationale', f.rationale],
-    ['Receipt', f.receipt],
-    ['create_job', f.create_tx, GL],
-    ['submit', f.submit_tx, GL],
-    ['evaluate', f.eval_tx, GL],
-    ['escrow', f.escrow, BASE + '/address'],
-    ['escrow fund', f.escrow_tx, BASE],
-    [
-      f.settle_kind ? `settle (${f.settle_kind})` : 'settle',
-      f.settle_tx,
-      BASE,
-    ],
+  const rows: Array<{
+    label: string;
+    value?: string;
+    base?: string;
+    strong?: boolean;
+  }> = [
+    { label: 'Rationale', value: f.rationale },
+    { label: 'Receipt', value: f.receipt, strong: true },
+    { label: 'create_job', value: f.create_tx, base: GL },
+    { label: 'submit', value: f.submit_tx, base: GL },
+    { label: 'evaluate', value: f.eval_tx, base: GL },
+    { label: 'escrow', value: f.escrow, base: BASE + '/address' },
+    { label: 'escrow fund', value: f.escrow_tx, base: BASE },
+    {
+      label: f.settle_kind ? `settle (${f.settle_kind})` : 'settle',
+      value: f.settle_tx,
+      base: BASE,
+      strong: true,
+    },
   ];
   return (
-    <dl className="mt-3 space-y-1.5 border-t border-[#E8E6E1] pt-3 text-[13px]">
-      {rows.map(([k, v, base]) =>
-        v ? (
-          <div key={k} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-            <dt className="w-28 shrink-0 text-[#5B6068]">{k}</dt>
-            <dd className="mono min-w-0 flex-1 break-all">
-              {base ? (
+    <dl className="mt-2 space-y-2 border-t border-[#E8E6E1] pt-3 text-[13px]">
+      {rows.map((r) =>
+        r.value ? (
+          <div key={r.label} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+            <dt className="w-28 shrink-0 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5B6068]">
+              {r.label}
+            </dt>
+            <dd
+              className={
+                'mono min-w-0 flex-1 break-all ' +
+                (r.strong
+                  ? 'text-sm font-semibold text-[#1A1D21]'
+                  : r.label === 'Rationale'
+                    ? 'font-sans text-sm text-[#1A1D21]'
+                    : 'text-xs text-[#5B6068]')
+              }
+            >
+              {r.base ? (
                 <a
                   href={
-                    base.endsWith('/address')
-                      ? `${base}/${v}`
-                      : txHref(base, v)
+                    r.base.endsWith('/address')
+                      ? `${r.base}/${r.value}`
+                      : txHref(r.base, r.value)
                   }
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[#1E40AF] hover:underline"
+                  className={
+                    r.strong
+                      ? 'text-[#1A1D21] underline decoration-[#E8E6E1] underline-offset-2 hover:decoration-[#1A1D21]'
+                      : 'hover:text-[#1A1D21] hover:underline'
+                  }
                 >
-                  {v}
+                  {r.value}
                 </a>
               ) : (
-                v
+                r.value
               )}
             </dd>
           </div>

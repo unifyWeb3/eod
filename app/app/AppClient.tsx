@@ -54,7 +54,7 @@ export default function AppClient({ history }: { history: React.ReactNode }) {
               aria-label="Job summary"
               className="lg:sticky lg:top-6 lg:self-start"
             >
-              <div className="rounded-[10px] border border-[#E8E6E1] bg-white px-4 py-4 text-sm">
+              <div className="rounded-[10px] border border-[#E8E6E1] bg-[#F4F3F0] px-4 py-4 text-sm">
                 <h2 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[#5B6068]">
                   Summary
                 </h2>

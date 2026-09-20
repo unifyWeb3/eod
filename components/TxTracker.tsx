@@ -122,11 +122,15 @@ export function TxTracker({ defaultHash = '' }: { defaultHash?: string }) {
       {data ? (
         <div className="mt-4">
           <ol
-            className="flex items-center gap-1"
+            className="relative flex items-center gap-1 sm:gap-2"
             aria-label="Transaction lifecycle"
           >
+            <span
+              aria-hidden="true"
+              className="absolute right-4 left-4 hidden h-px bg-[#E8E6E1] min-[420px]:block"
+            />
             {PHASES.map((p, i) => (
-              <li key={p} className="flex flex-1 items-center gap-1">
+              <li key={p} className="relative flex flex-1 items-center">
                 <span
                   aria-current={i === idx ? 'step' : undefined}
                   className={
@@ -135,7 +139,7 @@ export function TxTracker({ defaultHash = '' }: { defaultHash?: string }) {
                       ? 'border-[#15803D]/30 bg-[#F0FDF4] text-[#15803D]'
                       : i === idx
                         ? 'border-[#3B5BFD]/40 bg-[#3B5BFD]/5 text-[#1E40AF]'
-                        : 'border-[#E8E6E1] text-[#5B6068]')
+                        : 'border-[#E8E6E1] bg-white text-[#5B6068]')
                   }
                 >
                   {p}

@@ -4,13 +4,8 @@ import { useMemo, useState } from 'react';
 import { createTransactionKit } from '@genlayer/transaction-kit';
 import { GenLayerTransactionPanel } from '@genlayer/transaction-kit-react';
 import '@genlayer/transaction-kit-react/styles.css';
+import { ACCEPTANCE_CONTRACT, CHAIN, FEE_PROFILE } from '../lib/genlayer';
 import {
-  ACCEPTANCE_CONTRACT,
-  CHAIN,
-  FEE_PROFILE,
-} from '../lib/genlayer';
-import {
-  DEFAULT_CRITERIA,
   buildPolicy,
   validateCriteria,
   type Criterion,
@@ -28,9 +23,15 @@ declare global {
   }
 }
 
-export default function NewJobPanel() {
-  const [account, setAccount] = useState<string | null>(null);
-  const [criteria, setCriteria] = useState<Criterion[]>(DEFAULT_CRITERIA);
+export default function NewJobPanel({
+  account,
+  criteria,
+  onCriteriaChange,
+}: {
+  account: string | null;
+  criteria: Criterion[];
+  onCriteriaChange: (next: Criterion[]) => void;
+}) {
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,10 +46,7 @@ export default function NewJobPanel() {
   }, [criteria, builderProblems]);
 
   // Fail closed: never build a signing kit from an out-of-bounds profile.
-  const profileProblems = useMemo(
-    () => validateFeeProfile(FEE_PROFILE),
-    [],
-  );
+  const profileProblems = useMemo(() => validateFeeProfile(FEE_PROFILE), []);
 
   const methodProfile: any = (FEE_PROFILE as any)?.methods?.create_job ?? {};
 
@@ -81,37 +79,29 @@ export default function NewJobPanel() {
       setError(String(e?.message ?? e));
       return null;
     }
-  }, [account, profileProblems]);
+  }, [account, policy, builderProblems, profileProblems]);
 
-  async function connect() {
-    setError(null);
-    if (!window.ethereum) {
-      setError('No injected wallet found.');
-      return;
-    }
-    const accounts: string[] = await window.ethereum.request({
-      method: 'eth_requestAccounts',
-    });
-    setAccount(accounts[0] ?? null);
-  }
+  const totalWeight = criteria.reduce((n, c) => n + (c.weight || 0), 0);
 
   return (
-    <div style={{ border: '1px solid #ccc', padding: 12 }}>
-      {!account ? (
-        <button onClick={connect}>Connect wallet</button>
-      ) : (
-        <p>connected {account.slice(0, 10)}…</p>
-      )}
-      {error ? <p style={{ color: 'red' }}>{error}</p> : null}
-      <p>
-        Signing timeouts for <code>create_job</code> (allowed{' '}
-        {PHASE_TIMEOUT_MIN}–{PHASE_TIMEOUT_MAX}): leader{' '}
-        {String(methodProfile.leaderTimeunitsAllocation ?? '?')}, validator{' '}
-        {String(methodProfile.validatorTimeunitsAllocation ?? '?')}. Live GEN
-        prices are quoted at signing; these allocations come from
-        fee-profile.json.
+    <div>
+      <h1 className="text-xl font-semibold tracking-tight">
+        Create an acceptance job
+      </h1>
+      <p className="mt-1 text-[15px] text-[#5B6068]">
+        Define what successful work means before the seller begins.
       </p>
-      <CriteriaBuilder criteria={criteria} onChange={setCriteria} />
+
+      {error ? (
+        <p role="alert" className="mt-4 text-sm text-[#DC2626]">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="mt-6">
+        <CriteriaBuilder criteria={criteria} onChange={onCriteriaChange} />
+      </div>
+
       <details className="mt-4 rounded-[10px] border border-[#E8E6E1] bg-white">
         <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
           <span className="inline-flex min-h-[44px] items-center">
@@ -124,31 +114,80 @@ export default function NewJobPanel() {
           </pre>
         </div>
       </details>
-      {kit ? (
-        <GenLayerTransactionPanel
-          kit={kit}
-          tx={{
-            kind: 'write',
-            address: ACCEPTANCE_CONTRACT,
-            method: 'create_job',
-            args: [policy ?? ''],
-          }}
-          trackUntil="finalized"
-          onDone={(status: any) => {
-            const txid =
-              status?.genlayerTxId ?? status?.hash ?? JSON.stringify(status);
-            setDone(String(txid));
-            fetch('/api/jobs', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ txid: String(txid), policy }),
-            }).catch(() => {});
-          }}
-        />
-      ) : (
-        <p>Connect a wallet to quote from fee-profile.json and submit.</p>
-      )}
-      {done ? <p>done: {done}</p> : null}
+
+      <div className="mt-6 rounded-[10px] border border-[#E8E6E1] bg-white px-4 py-4">
+        <h3 className="text-sm font-semibold">Review transaction</h3>
+        <dl className="tnum mt-2 grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
+          <div className="flex justify-between gap-3 py-1">
+            <dt className="text-[#5B6068]">Policy</dt>
+            <dd>
+              {criteria.length} criteria · weight {totalWeight}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-3 py-1">
+            <dt className="text-[#5B6068]">Consensus</dt>
+            <dd>Standard</dd>
+          </div>
+          <div className="flex justify-between gap-3 py-1">
+            <dt className="text-[#5B6068]">Phase timeout</dt>
+            <dd className="mono">
+              {String(methodProfile.leaderTimeunitsAllocation ?? '?')} /{' '}
+              {String(methodProfile.validatorTimeunitsAllocation ?? '?')}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-3 py-1">
+            <dt className="text-[#5B6068]">Deposit</dt>
+            <dd className="text-[#5B6068]">quoted at signing below</dd>
+          </div>
+        </dl>
+        <details className="mt-2">
+          <summary className="cursor-pointer list-none text-[13px] font-medium text-[#1E40AF] hover:underline [&::-webkit-details-marker]:hidden">
+            <span className="inline-flex min-h-[44px] items-center">
+              Advanced transaction details
+            </span>
+          </summary>
+          <p className="text-[13px] leading-relaxed text-[#5B6068]">
+            Allowed phase-timeout bounds {PHASE_TIMEOUT_MIN}–
+            {PHASE_TIMEOUT_MAX}. Live GEN prices are quoted at signing;
+            allocations come from the measured fee-profile.json. Verification
+            must read “verified” before you sign.
+          </p>
+        </details>
+      </div>
+
+      <div className="mt-4">
+        {kit ? (
+          <GenLayerTransactionPanel
+            kit={kit}
+            tx={{
+              kind: 'write',
+              address: ACCEPTANCE_CONTRACT,
+              method: 'create_job',
+              args: [policy ?? ''],
+            }}
+            trackUntil="finalized"
+            onDone={(status: any) => {
+              const txid =
+                status?.genlayerTxId ?? status?.hash ?? JSON.stringify(status);
+              setDone(String(txid));
+              fetch('/api/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ txid: String(txid), policy }),
+              }).catch(() => {});
+            }}
+          />
+        ) : (
+          <p className="rounded-[10px] border border-dashed border-[#E8E6E1] px-4 py-4 text-sm text-[#5B6068]">
+            {account
+              ? 'Complete valid criteria above to prepare your quote.'
+              : 'Connect your wallet above to prepare a quote and submit.'}
+          </p>
+        )}
+        {done ? (
+          <p className="mono mt-3 break-all text-[13px]">done: {done}</p>
+        ) : null}
+      </div>
     </div>
   );
 }

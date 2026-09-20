@@ -1,74 +1,171 @@
-# Acceptance Adapter — routine post-delivery verdicts that move money
+# EOD
 
-**One line:** agent buyers post machine-readable acceptance policies, GenLayer validators judge the subjective residue, and a finalized ACCEPT/REJECT receipt releases or refunds escrowed funds — no human review, no private LLM call.
+EOD turns subjective work acceptance into a finalized onchain receipt that payment systems can act on.
 
-## Problem
-Agents hire agents at machine speed. Every job ends with the same question — *did the deliverable meet the terms?* — and today's answers (human review queues, platform support tickets, a private LLM signoff) are slow, inconsistent, and trivially bypassable by the agent being judged.
+[Live App](https://eodyn.vercel.app) · [Evidence](docs/E2E-EVIDENCE.md) · [How it works](#how-eod-works)
 
-## What this does
-A narrow acceptance rail between agent work and payment:
-1. Buyer posts a **versioned policy** (2–4 natural-language criteria).
-2. Seller submits a **typed deliverable envelope** (artifacts + hashes + source URIs).
-3. Deterministic gates reject malformed work instantly (schema, hash, source) — no LLM spent.
-4. Only genuine subjective residue goes to **GenLayer consensus**; validators independently re-judge and must agree exactly.
-5. Every job ends in a finalized receipt — `ACCEPT`, `REJECT`, or `UNDETERMINED` — that a downstream escrow acts on: release, refund, or hold.
+## The problem
 
-## End-to-end flow
+Every agent job eventually reaches the same question: did the work actually meet the brief?
+
+Deterministic systems verify schema, hashes, freshness, allowlists, and other objective requirements. They cannot cleanly determine whether a deliverable genuinely satisfies subjective written requirements.
+
+Today that judgment may sit with the buyer, a platform backend, one LLM, or a human reviewer. Each option is slow, private, or easy for the judged party to bypass. EOD creates a shared acceptance layer instead.
+
+## How EOD works
+
+The buyer defines what "done" means before judgment. Objective failures are handled deterministically first. Only the subjective remainder goes to GenLayer consensus. The finalized verdict is `ACCEPT`, `REJECT`, or `UNDETERMINED`.
+
+```mermaid
+flowchart TB
+    policy[Buyer defines acceptance policy]
+    submit[Seller submits deliverable]
+    gates[Deterministic gates<br/>schema · hashes · freshness · allowlists]
+    residue[Subjective requirements remain]
+    consensus[GenLayer consensus]
+    receipt[Finalized receipt<br/>ACCEPT / REJECT / UNDETERMINED]
+    settle[External settlement system<br/>RELEASE / REFUND / NO ACTION]
+    policy --> submit --> gates --> residue --> consensus --> receipt --> settle
 ```
-policy → envelope → deterministic gates → GenLayer evaluate → receipt
-                                                              ├─ ACCEPT → escrow.release() → seller paid
-                                                              ├─ REJECT → escrow.refund()  → buyer refunded
-                                                              └─ UNDETERMINED → funds stay locked, no action
-```
+
+## Proven end to end
+
+A browser wallet created `job-5` through the live app. GenLayer evaluated it. An external escrow released on the receipt.
+
+| Step                | Result            |
+| ------------------- | ----------------- |
+| Browser create      | Finalized         |
+| Submit              | Finalized         |
+| GenLayer evaluation | ACCEPT            |
+| Receipt             | `job-5:v1:ACCEPT` |
+| Escrow              | 0.01 ETH          |
+| Settlement          | RELEASE           |
+| Seller delta        | +0.010 ETH        |
+
+The full hash trail, balance proof, and finality record are in [docs/E2E-EVIDENCE.md](docs/E2E-EVIDENCE.md).
+
+## Why GenLayer
+
+Without GenLayer, the subjective acceptance decision returns to one private reviewer, model, backend, or party. That is a different trust model: a single opinion instead of a shared verdict.
+
+EOD uses deterministic code for what deterministic code can decide. That part needs no consensus and spends no LLM calls. GenLayer handles the part that actually requires judgment: independent validators re-judge the evidence against the same criteria and must agree exactly before the receipt finalizes.
+
+## Use cases
+
+### Agent marketplaces
+
+Settle autonomous jobs against shared acceptance rules.
+
+### Bounties and contributor work
+
+Turn qualitative completion requirements into a verdict payment rails can consume.
+
+### Agent orchestration
+
+Let one system commission another without either side being the sole judge of success.
 
 ## Architecture
-- **`contracts/acceptance.py`** — GenLayer Intelligent Contract (create_job / submit_deliverable / evaluate / views). Deterministic checks first, one comparative LLM judgment, UNDETERMINED first-class, no custody.
-- **`evm/SpikeEscrow.sol`** (Base Sepolia) — buyer-funded escrow; arbiter-only release/refund. Holds the money so GenLayer never has to.
-- **`scripts/day2_fixtures.py`** — operator relayer: gates every settlement on `isSuccessful` + FINALIZED + `FINISHED_WITH_RETURN` + exact receipt match. Txids logged to `scripts/day2_state.json`.
-- **`app/`** (Next.js + Transaction Kit) — inspector over real onchain history plus a wallet-signed new-job panel quoting from the measured `fee-profile.json` with fail-closed phase-timeout bounds.
 
-## Canonical live proof — job-5 (browser E2E)
-A real wallet created the job through the app; consensus judged it; real test ETH moved:
+* Web app and browser wallet: buyers define policies and sign `create_job` through MetaMask with a fee quote from the measured profile.
+* Acceptance Intelligent Contract (`contracts/acceptance.py`): owns policy, evidence envelope, deterministic gates, and the consensus verdict. Holds no funds.
+* GenLayer consensus (studio-dev, chain ID 61997): validators independently re-judge subjective criteria; exact agreement finalizes the receipt.
+* External escrow (`evm/SpikeEscrow.sol` on Base Sepolia): buyer-funded; arbiter-only release/refund driven by finalized receipts.
+* Relayer scripts (`scripts/`): submit, evaluate, and settle with every action gated on FINALIZED plus `FINISHED_WITH_RETURN` plus exact receipt match.
+* Evidence layer (`docs/E2E-EVIDENCE.md`, `data/fixtures.json`): every fund movement recorded with txids and balances.
 
-| Step | Evidence |
-|---|---|
-| browser `create_job` | `0x528bf6c62df8e14c9342aec6611bca6e1e407bb814a6fae1c4fc5de7feae9616` → job-5 |
-| `submit_deliverable` | `0x489498a45f342f8d5224594985d75549c17294ce08fde7eaae7f9f3d221dceef` |
-| `evaluate` → **ACCEPT** | `0x0a53b7dcbe73f98d7ac58c995852a7a1198dd3c760fa77b57b61580939f308aa` · receipt `job-5:v1:ACCEPT` |
-| escrow fund 0.01 ETH | `f15c9c98e0fc5f1de747055a100f0da1e183a12cd85f563ce0c9447b7c4fc67e` → `0xFCb82527807FE191f7d85587057CEE22A29697c2` |
-| **RELEASE** | `46dfb9808e7fedb2d6d9f87a9837833759b09f7d8b50e038096de5d5faab6bc2` (status 1) |
+**GenLayer produces the verdict. It does not hold the escrowed ETH.** Settlement is executed by an external contract acting on the finalized receipt.
 
-Balance proof: escrow 0.01 → **0 ETH** · seller 0.045 → **0.055 ETH** (+0.01 exact) · operator gas accounted separately. Verify: [BaseScan escrow](https://sepolia.basescan.org/address/0xFCb82527807FE191f7d85587057CEE22A29697c2) · [studio-dev explorer](https://explorer-studio-dev.genlayer.com) · full record in `docs/E2E-EVIDENCE.md`.
+Networks:
+
+* GenLayer: studio-dev, chain ID 61997. Acceptance v9: `0xFB388b8213a8Ac809B212E879E62e103F6d7767b`
+* Settlement: Base Sepolia. Escrow addresses are per-fixture; see the evidence doc.
+
+## Product walkthrough
+
+The live app at https://eodyn.vercel.app offers three views.
+
+### Create
+
+Define acceptance criteria in plain language and review the generated policy JSON. This is the browser-operated path proven by job-5: connect a wallet, review the fee quote, sign `create_job`.
+
+### Track
+
+Follow any studio-dev transaction through submitted, decided, and finalized, with execution result and fee accounting.
+
+### History
+
+Inspect verified ACCEPT, deterministic gate rejection, and REJECT/refund paths with receipts and explorer links.
+
+The proven job-5 ceremony was browser-created, then completed through the existing agent and script path for submit, evaluate, and settlement. That split remains the current architecture: the browser panel covers creation, and scripts drive the remaining lifecycle steps against the same contract.
+
+## Verified behavior
+
+Sourced from `scripts/day2_state.json` and `data/fixtures.json` on Acceptance v9:
+
+| Fixture | Verdict | Receipt | Settlement |
+|---|---|---|---|
+| pass (job-1) | ACCEPT | `job-1:v1:ACCEPT` | RELEASE |
+| structural (job-2) | gate rejection | none (stopped pre-consensus) | none |
+| semantic (job-3) | REJECT | `job-3:v1:REJECT` | REFUND |
+| ambiguous (job-4) | REJECT | `job-4:v1:REJECT` | REFUND |
+| browser job-5 | ACCEPT | `job-5:v1:ACCEPT` | RELEASE |
 
 ## Run locally
-```bash
+
+App only (no secrets required; the deployed frontend configures no environment variables):
+
+```text
+git clone https://github.com/unifyWeb3/eod.git
+cd eod
+npm install
+npm run build
+npm start -- -p 3101
+open http://localhost:3101
+```
+
+Contracts and lifecycle scripts (needs local keys and testnet funds; never commit `.env`):
+
+```text
 python3 -m venv .venv && .venv/bin/pip install \
   "genlayer-py==0.19.0rc2" "genlayer-test==0.30.0rc2" "genvm-linter==0.11.1rc2"
-cp .env.example .env   # fill values locally; .env is git-ignored, never commit it
-npm install            # next 15.5.25, genlayer-js 2.0.0-rc.1, transaction-kit 0.1.0-rc.2
-npm run build && npm start -- -p 3101
+cp .env.example .env   # fill privately; .env is git-ignored
 ```
-Needs: studio-dev GEN (faucet) for GenLayer writes; Base Sepolia ETH for escrow flows. No step requires mainnet.
 
-## Deployed contracts / networks (testnets only — no mainnet)
-- Acceptance v9 (current): `0xFB388b8213a8Ac809B212E879E62e103F6d7767b` — studio-dev, chain 61997
-- Prior builds: v6 `0x96F9…dc5` (Day-2 fixtures), spike contracts (Day-1) — see evidence doc
-- Escrows: Base Sepolia, chain 84532 (per-fixture addresses in evidence doc)
+GenLayer writes need studio-dev GEN from the Studio faucet and a matching `studio-dev` chain configuration. Escrow flows need Base Sepolia ETH. No step touches mainnet.
 
-## Fee + finality behavior
-- Every deploy/write carries SDK-estimated `FeesDistribution` + `feeValue` from the measured `fee-profile.json` (allocations floored at the network phase-timeout minimum 30/30 after a `PhaseTimeoutOutOfBounds(2,30,600)` revert taught us measured use ≠ safe allocation).
-- A receipt counts only when the tx is FINALIZED **and** `isSuccessful` (`FINISHED_WITH_RETURN`). The relayer re-reads chain state instead of trusting its own submission.
-- Typical: ~5e-5 GEN per method, 35–110s to finalization on studio-dev.
+## Repository structure
 
-## Limitations (explicit)
-- **UNDETERMINED is implemented but untriggered live** — studio-dev validators resolved all 7 ambiguity designs decisively. Never claimed in demos.
-- Settlement executes through the **operator key** today; the relayer allowlist is a written design (`docs/relayer-allowlist.md`), not built.
-- The browser panel covers job creation; submit/evaluate/settle run via scripts (extension specced in `docs/e2e-runbook.md`).
-- Testnets only. Not production, not audited, no mainnet.
+```text
+app/          Next.js product UI (landing, /app workflow, jobs API)
+components/   product and workflow components
+contracts/    Acceptance Intelligent Contract
+evm/          external settlement contract
+lib/          GenLayer, fee and policy logic
+scripts/      reproducible lifecycle runners plus txid state
+tests/        timeout/policy regression tests
+docs/         evidence and runbooks
+```
 
-## Deeper evidence
-- `docs/E2E-EVIDENCE.md` — every verified fund movement with txids, balances, finality
-- `docs/e2e-runbook.md` — how to re-run the browser E2E + record sheet
-- `docs/relayer-allowlist.md` — settlement trust design
-- `data/fixtures.json` — machine-readable fixture history
-- Research inputs: `COMPETITION.md`, `EXISTING-PRODUCTS.md`, `FOUNDER-SIGNALS.md`, `GENLAYER-INTELLIGENCE.md`, `OPPORTUNITY-MATRIX.md`
+## Testing and verification
+
+* Node tests: 12/12 (`tests/fees-phase-timeout.test.mjs`, `tests/policy-builder.test.mjs`)
+* Next.js production build with type checking: clean
+* `genvm-linter` on the Acceptance contract: clean
+* Forge offline compile of the escrow: clean
+* Live verification is recorded per fixture in `docs/E2E-EVIDENCE.md`, including the rule that a receipt counts only when FINALIZED with `FINISHED_WITH_RETURN`
+
+## Known limitations
+
+* Testnet software only. Nothing here is production-ready or audited.
+* `UNDETERMINED` exists in the contract and the settlement logic, but validators have resolved every ambiguity decisively so far, so no live UNDETERMINED settlement has been demonstrated.
+* Settlement currently executes through the operator key under strict receipt gating. The allowlisted relayer set in `docs/relayer-allowlist.md` is a written design, not built functionality.
+* The browser UI covers job creation directly; submit, evaluate, and settlement run through the documented scripts.
+* `/api/jobs` runtime persistence is not durable on Vercel serverless storage; durable history lives in `data/fixtures.json` and the evidence doc.
+* EOD judges only what its acceptance inputs expose. It makes no claim of detecting offchain cheating or fraud beyond the submitted evidence.
+
+## Evidence and docs
+
+* [docs/E2E-EVIDENCE.md](docs/E2E-EVIDENCE.md): every verified fund movement with txids, balances, and finality
+* [docs/demo-runbook.md](docs/demo-runbook.md): recorded demo plan for the canonical job-5 story
+* [docs/e2e-runbook.md](docs/e2e-runbook.md): how to re-run the browser E2E
+* [docs/relayer-allowlist.md](docs/relayer-allowlist.md): roadmap design for settlement trust, not shipped behavior

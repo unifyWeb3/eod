@@ -14,10 +14,15 @@
   "dependencies": {
     "@genlayer/transaction-kit": "0.1.0-rc.2",
     "@genlayer/transaction-kit-react": "0.1.0-rc.2",
+    "@tailwindcss/postcss": "4.3.3",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
     "genlayer-js": "2.0.0-rc.1",
     "next": "15.5.25",
     "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react-dom": "19.1.1",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

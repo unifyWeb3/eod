@@ -1,125 +1,87 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import NewJobPanel from '../components/NewJobPanel';
-import { ACCEPTANCE_CONTRACT, BASE_EXPLORER, GL_EXPLORER } from '../lib/genlayer';
-
-type Fixture = {
-  job_id?: string;
-  verdict?: string;
-  receipt?: string;
-  rationale?: string;
-  create_tx?: string;
-  submit_tx?: string;
-  eval_tx?: string;
-  escrow?: string;
-  escrow_tx?: string;
-  settle_tx?: string;
-  settle_kind?: string;
-  create_s?: number;
-  submit_s?: number;
-  eval_s?: number;
-};
-
-function loadFixtures(): Record<string, Fixture> {
-  try {
-    const raw = fs.readFileSync(
-      path.join(process.cwd(), 'data', 'fixtures.json'),
-      'utf8',
-    );
-    return JSON.parse(raw).fixtures ?? {};
-  } catch {
-    return {};
-  }
-}
-
-function txLinks(hashes: (string | undefined)[], base: string) {
-  return hashes
-    .filter((h): h is string => !!h && h.length > 20 && h !== 'adopted-after-502')
-    .map((h) => (
-      <span key={h} style={{ marginRight: 8 }}>
-        <a href={`${base}/tx/${h}`} target="_blank" rel="noreferrer">
-          {h.slice(0, 10)}…
-        </a>
-      </span>
-    ));
-}
-
-const ORDER = ['pass', 'structural', 'semantic', 'undetermined6'];
-const LABELS: Record<string, string> = {
-  pass: '1 · pass → ACCEPT → release',
-  structural: '2 · structural fail → deterministic gate (no LLM, no escrow)',
-  semantic: '3 · semantic fail → REJECT → refund',
-  undetermined6: '4 · ambiguous → validators resolve strictly (UNDETERMINED stays code-complete)',
-};
+import { SiteHeader, Section } from '../components/site';
+import { Hero, FlowStepper } from '../components/hero-flow';
+import { ProofSection } from '../components/proof';
+import {
+  Problem,
+  HowItWorks,
+  UseCases,
+  Architecture,
+  Limitations,
+  FinalCta,
+} from '../components/sections';
 
 export default function Page() {
-  const fixtures = loadFixtures();
   return (
     <>
-      <section>
-        <h2>Contract</h2>
-        <p>
-          Acceptance{' '}
-          <a
-            href={`${GL_EXPLORER}/address/${ACCEPTANCE_CONTRACT}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {ACCEPTANCE_CONTRACT}
-          </a>{' '}
-          · studio-dev (chain 61997)
-        </p>
-      </section>
-      <section>
-        <h2>Four-fixture demo (real onchain history)</h2>
-        {ORDER.map((name) => {
-          const f = fixtures[name];
-          if (!f) return <p key={name}>missing fixture: {name}</p>;
-          return (
-            <article
-              key={name}
-              style={{ border: '1px solid #ccc', padding: 12, margin: '12px 0' }}
+      <SiteHeader />
+      <main id="main">
+        <Hero />
+        <Section
+          eyebrow="How it works"
+          title="Five stages from policy to payment."
+          lede="Deterministic code handles everything it can. Human judgment is replaced by validator consensus — only where it is actually needed."
+        >
+          <FlowStepper />
+        </Section>
+        <Section
+          id="proof"
+          eyebrow="Live proof"
+          title="The complete path has already run."
+          lede="A browser wallet created job-5. GenLayer validators judged it ACCEPT. An escrow released 0.01 test ETH. Every step is verifiable below."
+        >
+          <ProofSection />
+        </Section>
+        <Section
+          eyebrow="Problem"
+          title="Agent work has a verdict gap."
+        >
+          <Problem />
+        </Section>
+        <Section
+          id="how"
+          eyebrow="Method"
+          title="Deterministic first, consensus for residue."
+        >
+          <HowItWorks />
+        </Section>
+        <Section eyebrow="Use cases" title="Where verdicts settle work.">
+          <UseCases />
+        </Section>
+        <Section
+          id="architecture"
+          eyebrow="Architecture"
+          title="GenLayer judges. It never holds the money."
+          lede="Adjudication and custody stay separate by design — the contract that decides cannot spend, and the contract that spends cannot decide."
+        >
+          <Architecture />
+        </Section>
+        <Section
+          eyebrow="Limitations"
+          title="Honest about testnet."
+        >
+          <Limitations />
+        </Section>
+        <div className="mx-auto max-w-[1120px] px-6 pb-24">
+          <FinalCta />
+        </div>
+      </main>
+      <footer className="border-t border-[#E8E6E1]">
+        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-6 py-8 text-sm text-[#5B6068]">
+          <p>EOD — verdict infrastructure for agentic work. Testnets only.</p>
+          <p>
+            <a
+              href="https://github.com/unifyWeb3/eod"
+              className="hover:text-[#1A1D21]"
             >
-              <h3>{LABELS[name]}</h3>
-              <p>
-                job {f.job_id} · verdict <strong>{f.verdict ?? 'gate-rejected'}</strong>
-                {f.receipt ? ` · receipt ${f.receipt}` : ''}
-              </p>
-              {f.rationale ? <p>rationale: {f.rationale}</p> : null}
-              <p>
-                GenLayer:{' '}
-                {txLinks([f.create_tx, f.submit_tx, f.eval_tx], GL_EXPLORER)}
-              </p>
-              {f.escrow ? (
-                <p>
-                  escrow{' '}
-                  <a
-                    href={`${BASE_EXPLORER}/address/${f.escrow}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {f.escrow.slice(0, 10)}…
-                  </a>{' '}
-                  {f.settle_kind ? `· ${f.settle_kind} ` : ''}
-                  {txLinks([f.escrow_tx, f.settle_tx], BASE_EXPLORER)}
-                </p>
-              ) : (
-                <p>no escrow (stopped at deterministic gate)</p>
-              )}
-              <p>
-                {[f.create_s, f.submit_s, f.eval_s]
-                  .filter((n) => typeof n === 'number')
-                  .join('s / ')}
-                {typeof f.eval_s === 'number' ? 's' : ''}
-              </p>
-            </article>
-          );
-        })}
-      </section>
-      <section>
-        <h2>New job (browser wallet, studio-dev)</h2>
-        <NewJobPanel />
-      </section>
+              GitHub
+            </a>{' '}
+            ·{' '}
+            <a href="/app" className="hover:text-[#1A1D21]">
+              Launch app
+            </a>
+          </p>
+        </div>
+      </footer>
     </>
   );
 }

@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+
+const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Acceptance Adapter — GenLayer Inspector',
+  title: 'EOD — Verdict infrastructure for agentic work',
   description:
-    'Routine post-delivery acceptance receipts backed by GenLayer consensus.',
+    'Define what "done" means before work begins. EOD uses deterministic checks and GenLayer consensus to produce a finalized verdict that payment systems can act on.',
 };
 
 export default function RootLayout({
@@ -13,15 +17,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0 }}>
-        <main style={{ maxWidth: 960, margin: '0 auto', padding: 24 }}>
-          <h1>Acceptance Adapter — inspector</h1>
-          <p>
-            Every deliverable ends in a finalized GenLayer receipt
-            (ACCEPT / REJECT / UNDETERMINED) that gates fund release.
-          </p>
-          {children}
-        </main>
+      <body className={inter.className}>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2"
+        >
+          Skip to content
+        </a>
+        {children}
       </body>
     </html>
   );

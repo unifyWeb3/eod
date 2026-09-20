@@ -1,0 +1,80 @@
+{
+  "acceptance_v9": "0xFB388b8213a8Ac809B212E879E62e103F6d7767b",
+  "fee_profile": "fee-profile.json",
+  "explorers": {
+    "base": "https://sepolia.basescan.org",
+    "genlayer": "https://explorer-studio-dev.genlayer.com"
+  },
+  "fixtures": {
+    "pass": {
+      "job_id": "job-1",
+      "create_tx": "0x4c37245bad1ae591dfc6588a95e6875fb77f5498b692e04cf16d327e8080b94d",
+      "create_s": 51,
+      "submit_tx": "0x4a9894eb3de333c89eb3fb9e94d1a5ef99fd31ad983614e3ea709cd439d46ce6",
+      "submit_s": 43,
+      "escrow": "0xb090D0Db498019b49199dB2c812E4884B9A66FF4",
+      "escrow_tx": "f736ee3efea7965cfb189e2d205e2eceed4c9f5f1aa5ca1cc287d61f79c1b61e",
+      "eval_txs": [
+        "0xb1f403d3eab2be1b85fb0be572e64c234de760b449b4aa36b08c92d7db63566a"
+      ],
+      "eval_tx": "0xb1f403d3eab2be1b85fb0be572e64c234de760b449b4aa36b08c92d7db63566a",
+      "eval_s": 112,
+      "eval_attempts": 1,
+      "verdict": "ACCEPT",
+      "receipt": "job-1:v1:ACCEPT",
+      "rationale": "The deliverable explicitly states that the sky is blue and includes the number 42.",
+      "settle_tx": "e50d8bd7d70a6eb8498f1f7e9973b72b2173b53da43e62f039e78595b37612b7",
+      "settle_kind": "release",
+      "settle_status": 1
+    },
+    "structural": {
+      "job_id": "job-2",
+      "create_tx": "0x55d41383de7586e43aac0e9f6c2e9d06e2bc54928df1e220505cd5e687e8f04c",
+      "create_s": 104,
+      "submit_tx": "0x2c31f9c1d4ded8159bd07369bc37664acf75fe14fc010dc1e369fccc283a9958",
+      "submit_error": "deterministic-gate (see explorer)"
+    },
+    "semantic": {
+      "job_id": "job-3",
+      "create_tx": "0x4a2332a40e4604351a46717d9707f627ad39073cbfcf036e0652562d64079050",
+      "create_s": 51,
+      "submit_tx": "0xf5e2d6a34b1890a5052fd8577a9e6c4e51e721c029b80162d9fbdeacf36083c2",
+      "submit_s": 44,
+      "escrow": "0xb9BD9563F8470e36FE7846a2631b9c3d6120025E",
+      "escrow_tx": "cb1420f4d593928c3b14cf29d5f792946b03075f155bb6221c7da5ec759fda14",
+      "eval_txs": [
+        "0xbdba16e3968c21326af9e6594f3c938a79d10a35881e43b2ea7295fd7e99cdd8"
+      ],
+      "eval_tx": "0xbdba16e3968c21326af9e6594f3c938a79d10a35881e43b2ea7295fd7e99cdd8",
+      "eval_s": 63,
+      "eval_attempts": 1,
+      "verdict": "REJECT",
+      "receipt": "job-3:v1:REJECT",
+      "rationale": "The deliverable states the sky is green, not blue, but includes the number 42.",
+      "settle_tx": "f81538af18d11c45ce2e884743ed7f602b25b137f82c3a12aff08aff1db39a0b",
+      "settle_kind": "refund",
+      "settle_status": 1
+    },
+    "undetermined6": {
+      "job_id": "job-4",
+      "create_tx": "0xfe4a8dfe59699851a712980786e42da0d48552037e27cbefd1207a1e73ecba0f",
+      "create_s": 53,
+      "submit_tx": "0x3572b9a889a4961b21f7e5db64c4c50636cf4852a48d7b7176187a4087e914fe",
+      "submit_s": 83,
+      "escrow": "0x56333fdE7f8Bdc716209BDd29C2B70b5A9dc07Dc",
+      "escrow_tx": "2827040f475ae71fd104044437621cbf78a8af74d31d2679b81a25811bb730e7",
+      "eval_txs": [
+        "0x2fc18ac8f2776784572594fffbd76e5884535c87c781e31926dba648f9f4d2da"
+      ],
+      "eval_tx": "0x2fc18ac8f2776784572594fffbd76e5884535c87c781e31926dba648f9f4d2da",
+      "eval_s": 69,
+      "eval_attempts": 1,
+      "verdict": "REJECT",
+      "receipt": "job-4:v1:REJECT",
+      "rationale": "The deliverable mentions the sky only for today, not tomorrow, and it explicitly includes the number 42.",
+      "settle_tx": "13ada5e68c4074af3549844ee9c211704ea662ebeda07e464136c1c7b0864e49",
+      "settle_kind": "refund",
+      "settle_status": 1
+    }
+  }
+}

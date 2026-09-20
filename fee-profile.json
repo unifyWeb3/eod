@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "network": "studio-dev",
+  "chainId": 61997,
+  "contract": "0xFB388b8213a8Ac809B212E879E62e103F6d7767b",
+  "measuredAt": "2026-09-19T06:40:00Z",
+  "revisedAt": "2026-09-20T00:00:00Z",
+  "method": "measured use x1.25, then clamped to the network phase-timeout floor. The v1 profile used raw measured use (leader 2-5 tu) and reverted onchain with PhaseTimeoutOutOfBounds(2,30,600) via the Transaction Kit path (MetaMask E2E). gltest --fee-profile cannot fix this: it records maximum observed use only, with no floor. Time-unit allocations therefore follow max(ceil(used*1.25), FLOOR=30); execution budgets stay purely measured x1.25. Live GEN prices are still quoted at signing time; this file carries allocations only.",
+  "floor": {
+    "criterion": "studio-dev consensus PhaseTimeoutOutOfBounds(value,minBound,maxBound), observed minBound=30 maxBound=600",
+    "leaderTimeunitsAllocation": "30",
+    "validatorTimeunitsAllocation": "30"
+  },
+  "deploy": {
+    "leaderTimeunitsAllocation": "30",
+    "validatorTimeunitsAllocation": "30",
+    "executionBudgetPerRound": "98371250000000",
+    "totalMessageFees": "0",
+    "rotationsPerRound": "1"
+  },
+  "methods": {
+    "create_job": {
+      "leaderTimeunitsAllocation": "30",
+      "validatorTimeunitsAllocation": "30",
+      "executionBudgetPerRound": "98289375000000",
+      "totalMessageFees": "0",
+      "rotationsPerRound": "1"
+    },
+    "submit_deliverable": {
+      "leaderTimeunitsAllocation": "30",
+      "validatorTimeunitsAllocation": "30",
+      "executionBudgetPerRound": "98290312500000",
+      "totalMessageFees": "0",
+      "rotationsPerRound": "1"
+    },
+    "evaluate": {
+      "leaderTimeunitsAllocation": "30",
+      "validatorTimeunitsAllocation": "30",
+      "executionBudgetPerRound": "99031875000000",
+      "totalMessageFees": "0",
+      "rotationsPerRound": "1"
+    }
+  }
+}

@@ -25,10 +25,10 @@ already happened; do not fabricate a new run for the video.
    bad work gets refunded, ambiguity stays code-complete but unclaimed."
 
 ## Click checklist (live or recorded)
-- [ ] App home renders fixtures + NewJobPanel
+- [ ] App home shows live Jobs & Receipts or the explicit unavailable state, plus NewJobPanel
 - [ ] BaseScan escrow page: balance 0, release tx visible
 - [ ] studio-dev explorer: evaluate tx → ACCEPT + receipt
-- [ ] `/api/jobs` shows the 3 job-5 records
+- [ ] Live Jobs & Receipts view reads the configured acceptance contract.
 
 ## Anticipated questions (answer from evidence, not slides)
 - "Was the verdict really decentralized?" → 5 validators, majority-agree,

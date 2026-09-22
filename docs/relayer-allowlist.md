@@ -45,8 +45,9 @@ GenLayer-verdict → EVM-settlement bridge simple and auditable.
 - Extend `scripts/day2_state.json` shape per fixture with:
   `eval_state:{status,receipt,rationale,isSuccessful,finalized}`,
   `settle:{kind,tx,block,checks:[...]}`.
-- The `/api/jobs` store already persists `{txid, policy, jobId, at}`;
-  add `verdict`, `receipt`, `settleTx` fields (backward compatible).
+- The former file-backed `/api/jobs` store was removed when application
+  history switched to live acceptance-contract reads. Keep any future
+  offchain audit log in the relayer's durable state, separate from job history.
 
 ### 4. What stays manual in Day-3a
 - Owner key == operator key (no separate cold owner yet).

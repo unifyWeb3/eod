@@ -25,7 +25,8 @@ Everything below is prepared; the human runs steps 1–7, I verify onchain after
    PhaseTimeoutOutOfBounds(2,30,600); fixed in fee-profile v2
    (allocations floored at 30) + `tests/fees-phase-timeout.test.mjs`.
 5. Sign `create_job` → wait for `trackUntil=finalized` → copy txid +
-   resulting `job-N` (read via inspector or `/api/jobs` entry auto-saved).
+   resulting `job-N` from the live acceptance contract's `get_job_count` and
+   `get_job` views.
 6. Submit deliverable + evaluate: current UI covers create only — run
    submit/evaluate via agent scripts against the created jobId (paste jobId
    to agent), OR extend panel first (see UX gaps).

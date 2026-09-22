@@ -160,7 +160,6 @@ docs/         evidence and runbooks
 * `UNDETERMINED` exists in the contract and the settlement logic, but validators have resolved every ambiguity decisively so far, so no live UNDETERMINED settlement has been demonstrated.
 * Settlement currently executes through the operator key under strict receipt gating. The allowlisted relayer set in `docs/relayer-allowlist.md` is a written design, not built functionality.
 * The browser UI covers job creation directly; submit, evaluate, and settlement run through the documented scripts.
-* `/api/jobs` runtime persistence is not durable on Vercel serverless storage; durable history lives in `data/fixtures.json` and the evidence doc.
 * EOD judges only what its acceptance inputs expose. It makes no claim of detecting offchain cheating or fraud beyond the submitted evidence.
 
 ## Evidence and docs

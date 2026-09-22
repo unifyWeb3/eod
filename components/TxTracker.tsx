@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createClient, isSuccessful } from 'genlayer-js';
-import { studioDevnet } from 'genlayer-js/chains';
+import { CHAIN, NETWORK_LABEL } from '../lib/genlayer';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -54,7 +54,7 @@ export function TxTracker({ defaultHash = '' }: { defaultHash?: string }) {
       return;
     }
     let stop = false;
-    const client = createClient({ chain: studioDevnet });
+    const client = createClient({ chain: CHAIN });
     async function poll() {
       try {
         // Regex above guarantees 0x + 64 hex; the client types the
@@ -91,7 +91,7 @@ export function TxTracker({ defaultHash = '' }: { defaultHash?: string }) {
     <Card>
       <h3 className="text-[15px] font-semibold">Track a transaction</h3>
       <p className="mt-1 text-[13px] text-[#5B6068]">
-        Read-only. Paste any studio-dev transaction hash — no wallet needed.
+        Read-only. Paste any {NETWORK_LABEL} transaction hash — no wallet needed.
       </p>
       <form
         className="mt-3 flex flex-col gap-2 sm:flex-row"

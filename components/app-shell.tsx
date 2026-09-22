@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from './ui/button';
-import { ACCEPTANCE_CONTRACT } from '../lib/genlayer';
+import { ACCEPTANCE_CONTRACT, NETWORK_LABEL } from '../lib/genlayer';
 import { shortAddress } from '../lib/wallet';
 
 export type AppView = 'create' | 'track' | 'history';
@@ -10,12 +10,8 @@ export type AppView = 'create' | 'track' | 'history';
 const VIEWS: Array<{ id: AppView; label: string }> = [
   { id: 'create', label: 'Create job' },
   { id: 'track', label: 'Track' },
-  { id: 'history', label: 'History' },
+  { id: 'history', label: 'Jobs & receipts' },
 ];
-
-function contractShort(): string {
-  return `0x${ACCEPTANCE_CONTRACT.slice(2, 6)}…${ACCEPTANCE_CONTRACT.slice(-6)}`;
-}
 
 export function AppShell({
   view,
@@ -52,7 +48,7 @@ export function AppShell({
               className="mono hidden rounded-full border border-[#E8E6E1] bg-white px-2 py-0.5 text-[11px] text-[#5B6068] md:inline"
               title={ACCEPTANCE_CONTRACT}
             >
-              v9 · {contractShort()}
+              {ACCEPTANCE_CONTRACT ? `Contract · ${ACCEPTANCE_CONTRACT}` : 'Contract unavailable'}
             </span>
           </div>
           <nav aria-label="Application views">
@@ -82,13 +78,13 @@ export function AppShell({
           <div className="ms-auto flex items-center gap-2">
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-[#E8E6E1] bg-white px-2.5 py-1 text-xs text-[#5B6068]"
-              title="GenLayer studio-dev network"
+              title={NETWORK_LABEL}
             >
               <span
                 aria-hidden="true"
                 className="inline-block h-2 w-2 rounded-full bg-[#15803D]"
               />
-              studio-dev
+              Bradbury · 4221
             </span>
             {account ? (
               <span

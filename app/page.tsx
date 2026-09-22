@@ -1,6 +1,5 @@
 import { SiteHeader, Section } from '../components/site';
 import { Hero, FlowStepper } from '../components/hero-flow';
-import { ProofSection } from '../components/proof';
 import {
   Problem,
   HowItWorks,
@@ -22,14 +21,6 @@ export default function Page() {
           lede="Deterministic code handles everything it can. Human judgment is replaced by validator consensus — only where it is actually needed."
         >
           <FlowStepper />
-        </Section>
-        <Section
-          id="proof"
-          eyebrow="Live proof"
-          title="The complete path has already run."
-          lede="A browser wallet created job-5. GenLayer validators judged it ACCEPT. An escrow released 0.01 test ETH. Every step is verifiable below."
-        >
-          <ProofSection />
         </Section>
         <Section
           eyebrow="Problem"

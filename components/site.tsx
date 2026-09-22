@@ -23,8 +23,8 @@ export function SiteHeader() {
           <Link className="text-[#5B6068] hover:text-[#1A1D21]" href="#how">
             How it works
           </Link>
-          <Link className="text-[#5B6068] hover:text-[#1A1D21]" href="#proof">
-            Live proof
+          <Link className="text-[#5B6068] hover:text-[#1A1D21]" href="/app">
+            Live jobs
           </Link>
           <Link className="text-[#5B6068] hover:text-[#1A1D21]" href="#architecture">
             Architecture
@@ -38,10 +38,10 @@ export function SiteHeader() {
         </nav>
         <div className="flex items-center gap-3">
           <Link
-            href="#proof"
+            href="/app"
             className="hidden text-sm text-[#5B6068] hover:text-[#1A1D21] sm:inline"
           >
-            View live proof
+            View live jobs
           </Link>
           <Link
             href="/app"

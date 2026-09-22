@@ -25,10 +25,10 @@ export function Hero() {
             Launch app
           </Link>
           <Link
-            href="#proof"
+            href="/app"
             className={cn(buttonVariants({ variant: 'secondary' }), 'px-6')}
           >
-            View live proof
+            View live jobs
           </Link>
         </div>
       </div>

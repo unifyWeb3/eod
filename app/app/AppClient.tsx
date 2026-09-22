@@ -3,17 +3,14 @@
 import { useState } from 'react';
 import { AppShell, type AppView } from '../../components/app-shell';
 import NewJobPanel from '../../components/NewJobPanel';
+import { HistoryView } from '../../components/HistoryView';
 import { TxTracker } from '../../components/TxTracker';
 import { DEFAULT_CRITERIA, type Criterion } from '../../lib/policy';
-import { ACCEPTANCE_CONTRACT } from '../../lib/genlayer';
+import { ACCEPTANCE_CONTRACT, NETWORK_LABEL } from '../../lib/genlayer';
 import { connectWallet, shortAddress } from '../../lib/wallet';
 
-function contractShort(): string {
-  return `v9 · 0x${ACCEPTANCE_CONTRACT.slice(2, 6)}…${ACCEPTANCE_CONTRACT.slice(-6)}`;
-}
-
-export default function AppClient({ history }: { history: React.ReactNode }) {
-  const [view, setView] = useState<AppView>('create');
+export default function AppClient() {
+  const [view, setView] = useState<AppView>('history');
   const [account, setAccount] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [criteria, setCriteria] =
@@ -69,12 +66,12 @@ export default function AppClient({ history }: { history: React.ReactNode }) {
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-[#5B6068]">Network</dt>
-                    <dd>studio-dev</dd>
+                    <dd>{NETWORK_LABEL}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-[#5B6068]">Contract</dt>
                     <dd className="mono" title={ACCEPTANCE_CONTRACT}>
-                      {contractShort()}
+                      {ACCEPTANCE_CONTRACT || 'Not configured'}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
@@ -85,7 +82,7 @@ export default function AppClient({ history }: { history: React.ReactNode }) {
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-[#5B6068]">Ready</dt>
-                    <dd>{account ? 'quote below' : 'connect wallet'}</dd>
+                    <dd>{ACCEPTANCE_CONTRACT ? 'signing unavailable' : 'deployment unavailable'}</dd>
                   </div>
                 </dl>
               </div>
@@ -99,16 +96,14 @@ export default function AppClient({ history }: { history: React.ReactNode }) {
               Track a transaction
             </h1>
             <p className="mt-1 max-w-[600px] text-[15px] text-[#5B6068]">
-              Follow any studio-dev transaction from submission to a
+              Follow any Bradbury transaction from submission to a
               finalized, successful receipt.
             </p>
-            <div className="mt-6">
-              <TxTracker defaultHash="0x0a53b7dcbe73f98d7ac58c995852a7a1198dd3c760fa77b57b61580939f308aa" />
-            </div>
+            <div className="mt-6"><TxTracker /></div>
           </div>
         ) : null}
 
-        {view === 'history' ? history : null}
+        {view === 'history' ? <HistoryView /> : null}
       </main>
     </>
   );

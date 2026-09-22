@@ -111,8 +111,9 @@ export function Limitations() {
   return (
     <div className="space-y-3">
       <Alert tone="neutral">
-        <strong>Testnets only.</strong> Studio-dev (GenLayer) and Base Sepolia.
-        Contracts are unaudited and carry no real value.
+        <strong>Testnet target: Bradbury.</strong> No verified acceptance
+        deployment is configured in the application. Contracts are unaudited
+        and carry no real value.
       </Alert>
       <Alert tone="undetermined">
         <strong>UNDETERMINED is implemented but untriggered live.</strong>{' '}

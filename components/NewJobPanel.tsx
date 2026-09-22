@@ -1,27 +1,16 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { createTransactionKit } from '@genlayer/transaction-kit';
-import { GenLayerTransactionPanel } from '@genlayer/transaction-kit-react';
-import '@genlayer/transaction-kit-react/styles.css';
-import { ACCEPTANCE_CONTRACT, CHAIN, FEE_PROFILE } from '../lib/genlayer';
+import { isAddress } from 'viem';
+import { ACCEPTANCE_CONTRACT, NETWORK_LABEL, SIGNING_ENABLED } from '../lib/genlayer';
 import {
   buildPolicy,
   validateCriteria,
   type Criterion,
 } from '../lib/policy';
 import { CriteriaBuilder } from './CriteriaBuilder';
-import {
-  PHASE_TIMEOUT_MAX,
-  PHASE_TIMEOUT_MIN,
-  validateFeeProfile,
-} from '../lib/fees';
-
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
+import { Input } from './ui/input';
+import { Button } from './ui/button';
 
 export default function NewJobPanel({
   account,
@@ -32,8 +21,7 @@ export default function NewJobPanel({
   criteria: Criterion[];
   onCriteriaChange: (next: Criterion[]) => void;
 }) {
-  const [done, setDone] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [seller, setSeller] = useState('');
 
   const builderProblems = useMemo(() => validateCriteria(criteria), [criteria]);
   const policy = useMemo(() => {
@@ -45,41 +33,9 @@ export default function NewJobPanel({
     }
   }, [criteria, builderProblems]);
 
-  // Fail closed: never build a signing kit from an out-of-bounds profile.
-  const profileProblems = useMemo(() => validateFeeProfile(FEE_PROFILE), []);
-
-  const methodProfile: any = (FEE_PROFILE as any)?.methods?.create_job ?? {};
-
-  const kit = useMemo(() => {
-    if (!account || typeof window === 'undefined' || !window.ethereum)
-      return null;
-    if (policy === null) {
-      setError(
-        'Fix the criteria above before signing: ' +
-          builderProblems.join(' '),
-      );
-      return null;
-    }
-    if (profileProblems.length > 0) {
-      setError(
-        'Fee profile blocked: ' +
-          profileProblems.join(' | ') +
-          ' — fix fee-profile.json before signing.',
-      );
-      return null;
-    }
-    try {
-      return createTransactionKit({
-        chain: CHAIN,
-        provider: window.ethereum,
-        account: account as `0x${string}`,
-        suggestions: FEE_PROFILE as any,
-      });
-    } catch (e: any) {
-      setError(String(e?.message ?? e));
-      return null;
-    }
-  }, [account, policy, builderProblems, profileProblems]);
+  const sellerValid =
+    isAddress(seller) &&
+    (!account || seller.toLowerCase() !== account.toLowerCase());
 
   const totalWeight = criteria.reduce((n, c) => n + (c.weight || 0), 0);
 
@@ -92,13 +48,29 @@ export default function NewJobPanel({
         Define what successful work means before the seller begins.
       </p>
 
-      {error ? (
-        <p role="alert" className="mt-4 text-sm text-[#DC2626]">
-          {error}
-        </p>
-      ) : null}
-
       <div className="mt-6">
+        <label htmlFor="authorized-seller" className="mb-1.5 block text-sm font-medium">
+          Authorized seller <span className="text-[#DC2626]">(required)</span>
+        </label>
+        <Input
+          id="authorized-seller"
+          className="mono"
+          inputMode="text"
+          autoComplete="off"
+          placeholder="0x…"
+          value={seller}
+          onChange={(event) => setSeller(event.target.value.trim())}
+          aria-invalid={seller.length > 0 && !sellerValid}
+          required
+        />
+        {seller.length > 0 && !sellerValid ? (
+          <p className="mt-1 text-xs text-[#DC2626]">
+            Enter a valid address distinct from the connected buyer.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="mt-5">
         <CriteriaBuilder criteria={criteria} onChange={onCriteriaChange} />
       </div>
 
@@ -130,14 +102,11 @@ export default function NewJobPanel({
           </div>
           <div className="flex justify-between gap-3 py-1">
             <dt className="text-[#5B6068]">Phase timeout</dt>
-            <dd className="mono">
-              {String(methodProfile.leaderTimeunitsAllocation ?? '?')} /{' '}
-              {String(methodProfile.validatorTimeunitsAllocation ?? '?')}
-            </dd>
+            <dd className="mono">unavailable</dd>
           </div>
           <div className="flex justify-between gap-3 py-1">
             <dt className="text-[#5B6068]">Deposit</dt>
-            <dd className="text-[#5B6068]">quoted at signing below</dd>
+            <dd className="text-[#5B6068]">unavailable</dd>
           </div>
         </dl>
         <details className="mt-2">
@@ -147,46 +116,25 @@ export default function NewJobPanel({
             </span>
           </summary>
           <p className="text-[13px] leading-relaxed text-[#5B6068]">
-            Allowed phase-timeout bounds {PHASE_TIMEOUT_MIN}–
-            {PHASE_TIMEOUT_MAX}. Live GEN prices are quoted at signing;
-            allocations come from the measured fee-profile.json. Verification
-            must read “verified” before you sign.
+            The Bradbury fee manager currently reverts on fee quote methods.
+            Creation remains disabled until the fee path is verified.
           </p>
         </details>
       </div>
 
       <div className="mt-4">
-        {kit ? (
-          <GenLayerTransactionPanel
-            kit={kit}
-            tx={{
-              kind: 'write',
-              address: ACCEPTANCE_CONTRACT,
-              method: 'create_job',
-              args: [policy ?? ''],
-            }}
-            trackUntil="finalized"
-            onDone={(status: any) => {
-              const txid =
-                status?.genlayerTxId ?? status?.hash ?? JSON.stringify(status);
-              setDone(String(txid));
-              fetch('/api/jobs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ txid: String(txid), policy }),
-              }).catch(() => {});
-            }}
-          />
-        ) : (
-          <p className="rounded-[10px] border border-dashed border-[#E8E6E1] px-4 py-4 text-sm text-[#5B6068]">
-            {account
-              ? 'Complete valid criteria above to prepare your quote.'
-              : 'Connect your wallet above to prepare a quote and submit.'}
-          </p>
-        )}
-        {done ? (
-          <p className="mono mt-3 break-all text-[13px]">done: {done}</p>
-        ) : null}
+        <p role="status" className="mb-3 rounded-[10px] border border-[#E8E6E1] bg-[#F4F3F0] px-4 py-3 text-sm text-[#5B6068]">
+          {ACCEPTANCE_CONTRACT
+            ? `Creation on ${NETWORK_LABEL} is disabled until the deployment and fee path are verified.`
+            : 'Creation is disabled: no verified acceptance deployment is configured.'}
+        </p>
+        <Button
+          type="button"
+          disabled={!SIGNING_ENABLED || !account || !sellerValid || policy === null}
+          title="Transaction signing is disabled until the network fee path is verified."
+        >
+          Create job · signing disabled
+        </Button>
       </div>
     </div>
   );

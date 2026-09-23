@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from 'genlayer-js';
 import { isAddress } from 'viem';
-import { ACCEPTANCE_CONTRACT, CHAIN, GL_EXPLORER, NETWORK_LABEL } from '../lib/genlayer';
+import { ACCEPTANCE_CONTRACT, CHAIN, EXPECTED_CHAIN_ID, GL_EXPLORER, NETWORK_LABEL } from '../lib/genlayer';
 import { loadLiveJobs, receiptLabel } from '../lib/live-jobs.mjs';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { JobWorkflowPanel } from './JobWorkflowPanel';
 
 type LiveJob = {
   id: string;
@@ -15,6 +16,13 @@ type LiveJob = {
   status?: string;
   verdict?: string;
   rationale?: string;
+  receipt?: string;
+  policy_commitment?: string;
+  evidence_commitment?: string;
+  evidence_manifest?: any;
+  envelope?: any;
+  escrow?: string;
+  funded_amount?: string;
   policy?: { criteria?: Array<{ id?: string; text?: string; weight?: number }> };
 };
 
@@ -27,11 +35,12 @@ function verdictTone(verdict?: string): 'accept' | 'reject' | 'undetermined' | '
   return 'neutral';
 }
 
-export function HistoryView() {
+export function HistoryView({ account }: { account: string | null }) {
   const [jobs, setJobs] = useState<LoadedJob[]>([]);
   const [count, setCount] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -45,7 +54,7 @@ export function HistoryView() {
     }
     try {
       const client = createClient({ chain: CHAIN });
-      const result = await loadLiveJobs({ client, address: ACCEPTANCE_CONTRACT });
+      const result = await loadLiveJobs({ client, address: ACCEPTANCE_CONTRACT, expectedChainId: EXPECTED_CHAIN_ID });
       setJobs(result.jobs);
       setCount(result.count);
     } catch (cause: any) {
@@ -56,6 +65,8 @@ export function HistoryView() {
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
+
+  const selected = jobs.find(({ job }) => job.id === selectedJobId);
 
   return (
     <section aria-labelledby="live-jobs-title" aria-live="polite">
@@ -77,7 +88,7 @@ export function HistoryView() {
         <dl className="grid gap-2 sm:grid-cols-2">
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-[#5B6068]">Target network</dt>
-            <dd>{NETWORK_LABEL}</dd>
+            <dd>{NETWORK_LABEL} · chain ID checked on refresh</dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-[#5B6068]">Acceptance contract</dt>
@@ -91,13 +102,16 @@ export function HistoryView() {
           {error}
         </p>
       ) : null}
+      {!error && selected ? (
+        <div className="mt-5"><JobWorkflowPanel job={selected.job as any} receipt={selected.receipt} account={account} onBack={() => setSelectedJobId(null)} /></div>
+      ) : null}
       {loading && !error ? <p role="status" className="mt-5 text-sm text-[#5B6068]">Reading finalized jobs…</p> : null}
-      {!loading && !error && jobs.length === 0 ? (
+      {!selectedJobId && !loading && !error && jobs.length === 0 ? (
         <p className="mt-5 rounded-[10px] border border-[#E8E6E1] bg-white px-4 py-4 text-sm text-[#5B6068]">
           The configured contract has no jobs yet.
         </p>
       ) : null}
-      {!loading && !error && jobs.length > 0 ? (
+      {!selectedJobId && !loading && !error && jobs.length > 0 ? (
         <>
           <p className="mt-5 text-[13px] text-[#5B6068]">
             Showing {jobs.length} of {count} jobs · finalized reads only.
@@ -110,6 +124,7 @@ export function HistoryView() {
                   <Badge tone={verdictTone(job.verdict)}>{job.verdict || job.status || '—'}</Badge>
                   <span className="ms-auto text-xs text-[#5B6068]">{job.status || '—'}</span>
                 </div>
+                <Button className="mt-3" variant="secondary" onClick={() => setSelectedJobId(job.id)}>Open job workflow</Button>
                 <dl className="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                   <div className="min-w-0">
                     <dt className="text-xs font-semibold uppercase tracking-wide text-[#5B6068]">Buyer</dt>

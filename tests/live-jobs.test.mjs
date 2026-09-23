@@ -9,6 +9,7 @@ function clientWith(jobs, receipts, count = Object.keys(jobs).length) {
   const calls = [];
   return {
     calls,
+    async getChainId() { return 4221n; },
     async getContractCode(address) {
       assert.equal(address, ADDRESS);
       return 'acceptance-contract-source';
@@ -95,6 +96,16 @@ test('RPC read failures remain unavailable errors and are not converted to empty
   const client = clientWith({}, {});
   client.readContract = async () => { throw new Error('Bradbury RPC unavailable'); };
   await assert.rejects(loadLiveJobs({ client, address: ADDRESS }), /Bradbury RPC unavailable/);
+});
+
+test('a fresh chain identity mismatch makes the live deployment unavailable', async () => {
+  const client = clientWith({}, {});
+  client.getChainId = async () => 84532n;
+  await assert.rejects(
+    loadLiveJobs({ client, address: ADDRESS, expectedChainId: 4221 }),
+    /on chain 84532; expected 4221/,
+  );
+  assert.equal(client.calls.length, 0);
 });
 
 test('receipt view formats an actual receipt and clearly marks the empty case', () => {

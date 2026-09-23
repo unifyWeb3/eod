@@ -82,9 +82,9 @@ export function AppShell({
             >
               <span
                 aria-hidden="true"
-                className="inline-block h-2 w-2 rounded-full bg-[#15803D]"
+                className="inline-block h-2 w-2 rounded-full bg-[#B45309]"
               />
-              Bradbury · 4221
+              Bradbury · 4221 target
             </span>
             {account ? (
               <span

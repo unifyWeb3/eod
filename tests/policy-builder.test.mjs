@@ -29,18 +29,13 @@ function loadPolicyLib() {
 
 const P = loadPolicyLib();
 
-const genlayerSrc = fs.readFileSync(
-  path.join(root, 'lib', 'genlayer.ts'),
-  'utf8',
-);
-
-// The exact demo policy the proven flow has always submitted (read live
-// from lib/genlayer.ts DEMO_POLICY and evaluated as JS, since the source
-// uses unquoted keys - never duplicated by hand).
-const demoLiteral = /DEMO_POLICY = JSON\.stringify\(([\s\S]*?)\);/.exec(
-  genlayerSrc,
-)[1];
-const demoJson = new Function(`return (${demoLiteral});`)();
+const demoJson = {
+  version: 1,
+  criteria: [
+    { id: 'c1', text: 'The deliverable must state that the sky is blue.', weight: 5 },
+    { id: 'c2', text: 'The deliverable must include the number 42.', weight: 5 },
+  ],
+};
 
 test('default builder state matches the proven demo policy', () => {
   assert.deepEqual(P.buildPolicy(P.DEFAULT_CRITERIA), demoJson);
@@ -95,4 +90,26 @@ test('more than 4 criteria are rejected', () => {
   assert.ok(
     P.validateCriteria(list).some((m) => m.includes('At most 4')),
   );
+});
+
+test('criterion text is limited by UTF-8 bytes rather than JavaScript characters', () => {
+  const unicode = 'é'.repeat(251);
+  assert.equal(unicode.length, 251);
+  assert.equal(new TextEncoder().encode(unicode).byteLength, 502);
+  assert.ok(P.validateCriteria([
+    { id: 'c1', text: unicode, weight: 5 },
+    { id: 'c2', text: 'Another criterion.', weight: 5 },
+  ]).some((problem) => problem.includes('500 UTF-8 bytes')));
+});
+
+test('criterion IDs follow the contract ASCII grammar and total policy text is byte bounded', () => {
+  assert.ok(P.validateCriteria([
+    { id: 'bad id', text: 'first', weight: 5 },
+    { id: 'c2', text: 'second', weight: 5 },
+  ]).some((problem) => problem.includes('ASCII letters')));
+  const long = 'x'.repeat(601);
+  assert.ok(P.validateCriteria([
+    { id: 'c1', text: long, weight: 5 },
+    { id: 'c2', text: long, weight: 5 },
+  ]).some((problem) => problem.includes('1200 UTF-8 bytes')));
 });

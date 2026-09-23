@@ -18,10 +18,10 @@ function phaseIndex(state?: string): number {
 
 function phaseCopy(state?: string, statusName?: string): string {
   if (state === 'finalized')
-    return 'Finalized. Fee accounting and refunds are settled; the result is durable.';
+    return 'Parent finalized. Read the execution result separately; finalization alone does not prove an external EVM settlement message was delivered.';
   if (state === 'decided')
     return 'Decided. Validators have agreed; waiting out the appeal window before finalization.';
-  return `Submitted${statusName ? ` (${statusName})` : ''}. The transaction is queued or under consensus — validators independently re-judge the evidence. Typical waits run 35–260s; this is normal, not a stall.`;
+  return `Submitted${statusName ? ` (${statusName})` : ''}. The transaction is queued or under consensus; this view reports the RPC state without assuming an outcome.`;
 }
 
 function fmtGenwei(v: unknown): string | null {

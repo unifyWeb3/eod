@@ -103,7 +103,7 @@ export default function AppClient() {
           </div>
         ) : null}
 
-        {view === 'history' ? <HistoryView /> : null}
+        {view === 'history' ? <HistoryView account={account} /> : null}
       </main>
     </>
   );

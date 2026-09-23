@@ -1,0 +1,58 @@
+{
+  "network": "testnet-bradbury",
+  "chain_id": 4221,
+  "toolchain": {
+    "py_genlayer_runner": "5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+    "solc": "0.8.24"
+  },
+  "factory": {
+    "address": "",
+    "deployment_tx": "",
+    "runtime_code_hash": ""
+  },
+  "evidence": {
+    "base_url": "",
+    "git_commit": "",
+    "artifact_url": "",
+    "digest": "",
+    "preflight_headers_file": ""
+  },
+  "scenarios": {
+    "accept": {
+      "acceptance_address": "",
+      "job_id": "",
+      "escrow": "",
+      "create_tx": "",
+      "submit_tx": "",
+      "commit_evidence_tx": "",
+      "factory_tx": "",
+      "bind_tx": "",
+      "evaluate_parent_tx": "",
+      "evaluate_receipt": "",
+      "triggered_evm_tx": "",
+      "withdraw_tx": ""
+    },
+    "reject": {
+      "acceptance_address": "",
+      "job_id": "",
+      "escrow": "",
+      "evaluate_parent_tx": "",
+      "evaluate_receipt": "",
+      "triggered_evm_tx": "",
+      "withdraw_tx": ""
+    },
+    "undetermined": {
+      "acceptance_address": "",
+      "job_id": "",
+      "escrow": "",
+      "evaluate_parent_tx": "",
+      "evaluate_receipt": "",
+      "triggered_evm_tx": ""
+    },
+    "withdrawal_recovery": {
+      "recipient": "",
+      "failed_withdraw_tx": "",
+      "successful_withdraw_tx": ""
+    }
+  }
+}

@@ -3,3 +3,4 @@ src = "."
 out = "out"
 libs = []
 solc_version = "0.8.24"
+fs_permissions = [{ access = "read", path = "./test" }]
